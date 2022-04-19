@@ -236,73 +236,95 @@ void TIM2_IRQHandler(void)
     midi_play();
 }
 void enable_ports(){
+    /**
+     * GPIOA - mapped to the Clock (CLK) and output enable (OE)
+     * GPIOB - mapped to the colors R1 R2 B1 B2 G1 G2 And latch (LAT)
+     * GPIOC - mapped to the row select lines (A B C D)
+     */
+
     RCC->AHBENR |= RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOCEN;
 //    GPIOA->MODER |= GPIO_MODER_MODER8_1 | GPIO_MODER_MODER9_0;
-    GPIOA->MODER |= GPIO_MODER_MODER8_0 | GPIO_MODER_MODER9_0;
+    GPIOA->MODER |= GPIO_MODER_MODER8_0 | GPIO_MODER_MODER9_0; // PA8 - CLK, PA9-OE
     GPIOB->MODER |= GPIO_MODER_MODER8_0 | GPIO_MODER_MODER4_0 | GPIO_MODER_MODER9_0 | GPIO_MODER_MODER10_0 | GPIO_MODER_MODER11_0 | GPIO_MODER_MODER12_0 | GPIO_MODER_MODER13_0;
+    //PB8-R1, PB9-R2, PB10-B1, PB11-B2, PB12-G1, PB13-G2, PB4-LAT
     GPIOC->MODER |= GPIO_MODER_MODER0_0 | GPIO_MODER_MODER1_0| GPIO_MODER_MODER2_0 | GPIO_MODER_MODER3_0;
+    //PC0-A, PC1-B, PC2-C, PC3-D
 
-    GPIOA->AFR[1] |= 0x2;
+//    GPIOA->AFR[1] |= 0x2;
 }
 
-init_tim1(){
-    RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
-
-    TIM1->CR1 &= ~TIM_CR1_CEN;
-
-}
 int main(void)
 {
-//    init_wavetable_sine();
-//    init_wavetable_square();
-//    init_wavetable_sawtooth();
-//    init_wavetable_hybrid();
-//    init_wavetable_hybrid2();
-//
-//    init_dac();
-//    init_tim6();
-//    init_gpiob();
-//
-//    GPIOB->BSRR |= 1<<0;
-//
-//    MIDI_Player *mp = midi_init(midifile);
-//    // The default rate for a MIDI file is 2 beats per second
-//    // with 48 ticks per beat.  That's 500000/48 microseconds.
-//    init_tim2(10417);
-//    for(;;) {
-//        asm("wfi");
-//        // If we hit the end of the MIDI file, start over.
-//        if (mp->nexttick == MAXTICKS)
-//            mp = midi_init(midifile);
-//
-//        gpiob_clock();
-//
-//    }
+    /**
+     * This block of code is for the initialization of the MIDI file player. To
+     * use simply un-comment and exclude all but one .c MIDI file
+     */
+
+    init_wavetable_sine();
+    init_wavetable_square();
+    init_wavetable_sawtooth();
+    init_wavetable_hybrid();
+    init_wavetable_hybrid2();
+
+    init_dac();
+    init_tim6();
+
+
+    MIDI_Player *mp = midi_init(midifile);
+    // The default rate for a MIDI file is 2 beats per second
+    // with 48 ticks per beat.  That's 500000/48 microseconds.
+    init_tim2(10417);
+    for(;;) {
+        asm("wfi");
+        // If we hit the end of the MIDI file, start over.
+        if (mp->nexttick == MAXTICKS)
+            mp = midi_init(midifile);
+
+    }
+
+    //// The following code is for running the 32x64 LED Matrix.
+
+    /**
+     * enables all the ports that are to be used to run the peripheral. More
+     * details inside the function.
+     */
     enable_ports();
 
-    init_tim1();
+    /*this infinite for loop is for driving the matrix. We can only display one
+     * row at a time so we need to drive the display fast enough for them all
+     * to appear visible
+    */
     for(;;){
-    for(int i = 0; i< 16; i++){
-        for(int j = 0; j < 64; j++){
-            if(j != 32)
-                GPIOB->BSRR |= 1<<12;   //G1
+    for(int i = 0; i< 16; i++){ // 32 rows but every for every row select you can drive 2 rows.
+        for(int j = 0; j < 64; j++){ // need to clock 64 times for each column on the display
+            if(j != 32) // simple if condition which says turn the upper current pixel green if its not the middle most one
+                GPIOB->BSRR |= 1<<12;
             else
                 GPIOB->BRR |= 1<<12;
-            if(i == 15)
-                GPIOB->BSRR |= 1<<9; // OE
+
+            if(i == 15) // another simple if condition which says turn the bottom current pixel red if its is the last row
+                GPIOB->BSRR |= 1<<9;
             else
                 GPIOB->BRR |= 1<<9;
-            GPIOA->BSRR |= 1<<8;    //CLCK
-            GPIOA->BRR |= 1<<8;     //CLCK
+
+            //clock these changes into the current pixel.
+            GPIOA->BSRR |= 1<<8;
+            GPIOA->BRR |= 1<<8;
 
         }
 
+        /* to finish the transmission
+         * Output enable turn high,
+         * LATCH is pulsed high then low
+         * new address is loaded in PC0-PC3.
+         * Output enable is turned off
+         */
         GPIOA->BSRR |= 1<<9;
         GPIOB->BSRR |= 1<<4;
         GPIOB->BRR |= 1<<4;
         GPIOC->BRR |= 0xf;
         GPIOC->BSRR |= i;
-        GPIOA->BRR |= 1<<9; // OE
+        GPIOA->BRR |= 1<<9;
     }
     }
 }
