@@ -2,6 +2,8 @@
 #include <string.h>
 #include "fb.h"
 
+const uint8_t baseStageHeight = LED_V_PX - 1;
+
 void clearFb(fb fbuf)
 {
 	memset(fbuf, 0, FB_SIZE);
@@ -62,18 +64,10 @@ void scrollFrameL(fb fbuf, uint32_t n)
 
 void drawStage(fb fbuf, uint32_t stageHeight, uint32_t scrollNum)
 {
-	static int oldStgHeight = -1;
-	if(oldStgHeight == -1)
-		oldStgHeight = stageHeight;
 	for(int i = LED_H_PX - scrollNum; i < LED_H_PX; i++) {
+		writePx(fbuf, W, baseStageHeight, i);
 		writePx(fbuf, W, stageHeight, i);
 	}
-	if(stageHeight != oldStgHeight) {
-		for(int i = MIN(stageHeight, oldStgHeight); i <= MAX(stageHeight, oldStgHeight); i++) {
-			writePx(fbuf, W, i, LED_H_PX - scrollNum);
-		}
-	}
-	oldStgHeight = stageHeight;
 }
 
 static uint8_t readSprite(Sprite* sprite, uint32_t x, uint32_t y)
@@ -85,13 +79,19 @@ static uint8_t readSprite(Sprite* sprite, uint32_t x, uint32_t y)
 }
 
 // The upper left corner of sprite is at (x, y)
-void drawSprite(fb fbuf, Sprite* sprite, uint32_t x, uint32_t y)
+// If collision, return 1, else 0
+uint8_t drawSprite(fb fbuf, Sprite* sprite, uint32_t x, uint32_t y)
 {
 	for(int i = 0; i < sprite->xSize && i + x < LED_V_PX; i++) {
 		for(int j = 0; j < sprite->ySize && j + y < LED_H_PX; j++) {
 			writePx(fbuf, readSprite(sprite, i, j), i + x, j + y);
 		}
 	}
+	// Collision checking
+	// Check bottom left corner for now
+	if(readPx(fbuf, x + sprite->xSize - 1, y + sprite->ySize))
+		return 1;
+	return 0;
 }
 
 void clearSprite(fb fbuf, Sprite* sprite, uint32_t x, uint32_t y)
