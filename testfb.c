@@ -12,15 +12,35 @@
 
 void drawFrame(fb);
 
+extern Sprite player;
+
 int main(void)
 {
 	fb fbuf;
+	// Single pixel drawing
 	clearFb(fbuf);
 	for(int i = 0; i < LED_H_PX; i++) {
 		writePx(fbuf, (i + 1) % CLOR_MASK, 1, i);
 	}
 	drawFrame(fbuf);
 	scrollFrameL(fbuf, 1);
+	drawFrame(fbuf);
+
+	// Stage drawing, scrolling
+	clearFb(fbuf);
+	drawStage(fbuf, LED_V_PX - 1, LED_H_PX);
+	drawFrame(fbuf);
+	scrollFrameL(fbuf, 3);
+	drawStage(fbuf, LED_V_PX - 3, 3);
+	drawFrame(fbuf);
+	scrollFrameL(fbuf, 1);
+	drawStage(fbuf, LED_V_PX - 3, 1);
+	drawFrame(fbuf);
+
+	// Sprites
+	drawSprite(fbuf, &player, LED_V_PX - 3, 0);
+	drawFrame(fbuf);
+	clearSprite(fbuf, &player, LED_V_PX - 3, 0);
 	drawFrame(fbuf);
 	return 0;
 }
@@ -67,5 +87,5 @@ void drawFrame(fb fbuf)
 		printf(ANSI_RST);
 		printf("\n");
 	}
-	printf("\nFrame ends\n");
+	printf("Frame ends\n");
 }
