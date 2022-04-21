@@ -6,13 +6,13 @@
 #include "musicplayer.h"
 
 
+
 void enable_ports(){
     RCC->AHBENR |= RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOCEN;
 //    GPIOA->MODER |= GPIO_MODER_MODER8_1 | GPIO_MODER_MODER9_0;
     GPIOA->MODER |= GPIO_MODER_MODER8_0 | GPIO_MODER_MODER9_0;
     GPIOB->MODER |= GPIO_MODER_MODER8_0 | GPIO_MODER_MODER4_0 | GPIO_MODER_MODER9_0 | GPIO_MODER_MODER10_0 | GPIO_MODER_MODER11_0 | GPIO_MODER_MODER12_0 | GPIO_MODER_MODER13_0;
     GPIOC->MODER |= GPIO_MODER_MODER0_0 | GPIO_MODER_MODER1_0| GPIO_MODER_MODER2_0 | GPIO_MODER_MODER3_0;
-
 //    GPIOA->AFR[1] |= 0x2;
 }
 
@@ -42,6 +42,7 @@ uint8_t block[3][3] = {
 };
 
 uint8_t dead = 0;
+uint8_t square_row = 11;
 
 void color_in(uint8_t RGB){
     GPIOB->BSRR |= (RGB & 0x01) == 0x01? 1<<11: 1<<(11+16);
@@ -64,11 +65,24 @@ void small_delay(){
     nano_wait(1000);
 }
 
+
+
+void enable_exti(void){
+    RCC -> APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;
+    SYSCFG ->EXTICR[0] &= ~SYSCFG_EXTICR1_EXTI2;
+    SYSCFG ->EXTICR[0] |=  SYSCFG_EXTICR1_EXTI2_PA;
+    EXTI -> RTSR = EXTI_RTSR_TR2;
+    EXTI -> IMR = EXTI_IMR_MR2;
+    NVIC -> ISER[0] |= 1 << EXTI2_3_IRQn;
+    NVIC_SetPriority(EXTI2_3_IRQn, 0);
+}
+
 void gpio_clock(){
     GPIOA->BSRR |= 1<<8;
     small_delay();
     GPIOA->BRR |= 1<<8;
 }
+
 void OE_h(){
     GPIOA->BSRR |= 1<<9;
 }
@@ -92,6 +106,7 @@ void check_music(MIDI_Player *mp){
 }
 
 void draw_square(int x, int y) {
+
     for (int i = 0; i < 3; i++) {
         if(!(bitmap[x + i][y + 3] == 0x00)) {
             dead = 1;
@@ -105,6 +120,13 @@ void draw_square(int x, int y) {
     }
 }
 
+void EXTI2_3_IRQHandler(void){
+    EXTI -> PR = EXTI_PR_PR2;
+    square_row = (square_row - 1); //increases position of square, boundaries not set correctly
+}
+
+
+
 int main(void)
 {
     //// MUSIC PLAYER
@@ -114,6 +136,7 @@ int main(void)
     MIDI_Player *mp = midi_init(midifile);
 
     enable_ports();
+    enable_exti();
 
     for(int i = 0; i<16; i++){
         for(int j = 0; j< 64; j++){
@@ -134,9 +157,8 @@ int main(void)
     int temp = 63;
 
     for(;;){
-
         if(check == 50 && !dead){
-
+            draw_square(11, 1);
             for(int i = 0; i< 16; i++){
                 for(int j = 0; j < 64; j++){
 
@@ -146,12 +168,12 @@ int main(void)
                     if(check2 >= 4){
                         check2 = 0;
                         if(i < 14 && !dead){
+                            draw_square(square_row, 1); //only works is column is 1.. not sure why 2 doesnt work
 
                             if(j < 4);
                             else
                                 bitmap[i][j] = j != 63 ? bitmap[i][j + 1]: 0x00;
 
-                            draw_square(11, 2);
                         } else if (dead) {
                             if (i < 14) {
                                 bitmap[i][j] = j != 63 ? bitmap[i][j + 1]: 0x00;
@@ -209,28 +231,6 @@ int main(void)
 
                 temp--;
             }
-
-            /*for(int i = 0; i< 16; i++){
-                for(int j = 0; j < 64; j++){
-
-                    color_in(bitmap[i][j]);
-                    gpio_clock();
-
-                    if(check2 >= 4){
-                        check2 = 0;
-                        bitmap[i][j] = j != 63 ? end_screen[i][j]: bitmap[i][j];
-                    }
-                    else
-                        check2 += 1;
-
-                    check_music(mp);
-                }
-
-                OE_h();
-                latch_pulse();
-                update_address(i);
-                OE_l();
-            }*/
             check = 0;
         }
         else
