@@ -38,9 +38,9 @@ int main(void)
 	drawFrame(fbuf);
 
 	// Sprites
-	drawSprite(fbuf, &player, LED_V_PX - 3, 0);
+	drawSprite(fbuf, &player, LED_V_PX - 4, 0);
 	drawFrame(fbuf);
-	clearSprite(fbuf, &player, LED_V_PX - 3, 0);
+	clearSprite(fbuf, &player, LED_V_PX - 4, 0);
 	drawFrame(fbuf);
 	return 0;
 }
