@@ -19,17 +19,56 @@ enum {
 enum {
 	GENERATE_FLAT = 0,
 	GENERATE_OBST,
-	GENERATE_BLCK_STAGE,
 	GENERATE_STAGE,
 	GENERATE_DESTAGE,
 	GENERATE_VAR0,
 	GENERATE_VAR1,
-	GENERATE_VAR2
+	GENERATE_VAR2,
+	GENERATE_VAR3
 };
 
-uint8_t is_Jumping;
+extern uint8_t pressed;
+extern uint8_t bitmap[16][64];
 
 static uint8_t getRand()
+{
+	return 0;
+}
+
+void drawScore()
+{
+	static check_score = 0;
+	if (check_score == 25) {
+                dig1++;
+                if (dig1 == 10) {
+                    dig1 = 0;
+                    dig2++;
+                }
+                if (dig2 == 10) {
+                    dig2 = 0;
+                    dig3++;
+                }
+                if (dig3 == 10) {
+                    dig3 = 0;
+                    dig4++;
+                }
+                if (dig4 == 10) {
+                    dig4 = 0;
+                }
+                check_score = 0;
+        } else
+                check_score++;
+
+        draw_digit(2, 57, dig1, 1);
+        if(dig2 || dig3 || dig4)
+        	draw_digit(2, 51, dig2, 1);
+        if(dig3 || dig4)
+        	draw_digit(2, 45, dig3, 1);
+        if(dig4)
+        	draw_digit(2, 38, dig4, 1);
+}
+
+uint8_t isFallThrough(fb fbuf, uint8_t oldX, uint8_t newX)
 {
 	return 0;
 }
@@ -43,34 +82,43 @@ int main(void)
 	int8_t playerVSpd = 0;
 	uint8_t blankPeriod = 0;
 	uint8_t stageHeight = NUM_ROWS - 1;
+	uint8_t curStgHeight = 0;
 
 	clearFb(fbuf);
 	drawStage(fbuf, stageHeight, LED_H_PX);
 	drawSprite(fbuf, &player, playerX, PLAYER_Y);
 	while(1) {
 		// Refresh led here
-
+		translate_frame(fbuf);
+		draw_bitmap();
 		// Game logic
 		switch(gameState) {
 		case GAME_INIT:
-			if(is_Jumping) {
-				is_Jumping = 0;
+			if(pressed) {
+				pressed = 0;
 				gameState = GAME_RUNNING;
 			}
 			break;
 		case GAME_RUNNING:
-			if(is_Jumping) {
-				is_Jumping = 0;
+			if(pressed) {
+				pressed = 0;
 				playerVSpd = JUMP_V0;
 				gameState = GAME_JUMPING;
+			} else if(!readPx(fbuf, playerX - player.xSize, PLAYER_Y)) {
+				gameState = GAME_JUMPING;
 			}
+			// fall off detection here
 		case GAME_JUMPING:
-			is_Jumping = 0;
+			pressed = 0;
 			clearSprite(fbuf, &player, playerX, PLAYER_Y);
-			playerX += -playerVSpd; // Well, smaller x is higher on frame, I blame the arr for that
-			playerVSpd = playerVSpd != 0 ? playerVSpd - GRAVITY : 0;
-			if(playerX >= stageHeight) {
-				playerX = stageHeight;
+			// Fall to stage detection
+			if(curStgHeight = isFallThrough(fbuf, playerX, playerX - playerVSpd)) {
+				playerX = curStgHeight;
+				playerVSpd = 0;
+				gameState = GAME_RUNNING;
+			} else {
+				playerX -= playerVSpd;
+				playerVSpd = playerVSpd != 0 ? playerVSpd - GRAVITY : 0;
 			}
 			scrollFrameL(fbuf, SCROLL_AMOUNT);
 
@@ -83,21 +131,20 @@ int main(void)
 					blankPeriod = MIN_OBST_DIST;
 				}
 				break;
-			case GENERATE_BLCK_STAGE:
+			case GENERATE_STAGE:
 				if(!blankPeriod) {
-					// draw obstacle here
+					if(stageHeight > MAX_STAGE_HEIGHT)
+						stageHeight -= STG_HEIGHT_INC;
+					else
+						stageHeight += STG_HEIGHT_INC;
 					blankPeriod = MIN_OBST_DIST;
 				}
-			case GENERATE_STAGE:
-				if(stageHeight > MAX_STAGE_HEIGHT)
-					stageHeight -= STG_HEIGHT_INC;
-				else
-					stageHeight += STG_HEIGHT_INC;
-				blankPeriod = MIN_OBST_DIST;
 				break;
 			case GENERATE_DESTAGE:
-				stageHeight += STG_HEIGHT_INC;
-				blankPeriod = MIN_OBST_DIST;
+				if(!blankPeriod) {
+					stageHeight += STG_HEIGHT_INC;
+					blankPeriod = MIN_OBST_DIST;
+				}
 			case GENERATE_FLAT:
 			default:
 				break;

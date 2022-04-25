@@ -11,4 +11,11 @@ const Sprite player = (Sprite) {
 	.ySize = 3
 };
 
-const Sprite obstacle;
+const Sprite obstacle = (Sprite) {
+	.pxMap = {SPRITEPX(Y, Y),
+		  SPRITEPX(Y, Y),
+		  SPRITEPX(Y, Y),
+		  SPRITEPX(Y, Y)},
+	.xSize = 2;
+	.ySize = 4;
+};
