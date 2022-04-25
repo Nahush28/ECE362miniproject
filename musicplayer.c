@@ -231,6 +231,24 @@ void init_tim2(int n) {
 
 }
 
+void enable_tim2(){
+    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+}
+
+void reset_music(){
+    TIM2->CR1 &= ~TIM_CR1_CEN;
+    int i;
+    for(i = 0; i < VOICES; i++){
+        voice[i].chan = 0;
+        voice[i].in_use = 0;
+        voice[i].last_sample = 0;
+        voice[i].note = 0;
+        voice[i].offset = 0;
+        voice[i].volume = 0;
+        voice[i].wavetable = 0;
+    }
+}
+
 void TIM2_IRQHandler(void)
 {
     // TODO: Remember to acknowledge the interrupt right here!
@@ -254,5 +272,6 @@ void init_musicplayer_peripherals(){
 
     // The default rate for a MIDI file is 2 beats per second
     // with 48 ticks per beat.  That's 500000/48 microseconds.
-    init_tim2(10417);
+//    init_tim2(10417);
+
 }
