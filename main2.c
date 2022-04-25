@@ -8,6 +8,8 @@
 #define MIN_OBST_DIST 6
 #define STG_HEIGHT_INC 6
 #define MAX_STAGE_HEIGHT 6
+#define OBST_SPAWN_X (LED_V_PX - obstacle.xSize - 1)
+#define OBST_SPAWN_Y (LED_H_PX - obstacle.ySize - 1)
 
 enum {
 	GAME_INIT = 0,
@@ -27,6 +29,16 @@ enum {
 	GENERATE_VAR3
 };
 
+__attribute__((packed))
+struct SysTickR {
+	uint32_t STK_CSR;
+	uint32_t STK_RVR;
+	uint32_t STK_CVR;
+	uint32_t STK_CALIB;
+};
+
+struct SysTickR* sysTick = (struct SysTickR*) 0xe000e010;
+
 extern uint8_t pressed;
 extern uint8_t bitmap[16][64];
 extern uint8_t start_screen[1024];
@@ -36,7 +48,8 @@ extern Sprite player, obstacle;
 
 static uint8_t getRand()
 {
-	return 0;
+	srand(sysTick -> STK_CVR);
+	return rand() % 8;
 }
 
 /*void drawScore()
@@ -92,15 +105,21 @@ void translateFB(fb fbuf)
 	}
 }
 
+void init_systick()
+{
+	sysTick -> STK_RVR = (1 << 24) - 1;
+	sysTick -> STK_CSR |= 1;
+}
+
 extern Sprite player;
 
-uint8_t slowDown = 0;
+uint16_t slowDown = 0;
 
 int main(void)
 {
 	// init
 	fb fbuf;
-	uint8_t gameState = GAME_RUNNING;
+	uint8_t gameState = GAME_INIT;
 	int8_t playerX = LED_V_PX - player.xSize - 1;
 	int8_t playerVSpd = 0;
 	uint8_t blankPeriod = 0;
@@ -109,10 +128,11 @@ int main(void)
 
 	enable_ports();
 	enable_exti();
+	init_systick();
 
 	clearFb(fbuf);
 	while(1) {
-		if(slowDown != 75) {
+		if(slowDown != 1000) {
 			slowDown++;
 			continue;
 		}
@@ -141,9 +161,8 @@ int main(void)
 				pressed = 0;
 				playerVSpd = JUMP_V0;
 				gameState = GAME_JUMPING;
-			} else if(!readPx(fbuf, playerX - player.xSize, PLAYER_Y)) {
+			} else if(!readPx(fbuf, playerX + player.xSize, PLAYER_Y)) {
 				// Fall off
-				playerVSpd = -1;
 				gameState = GAME_JUMPING;
 			}
 		case GAME_JUMPING:
@@ -167,6 +186,7 @@ int main(void)
 			case GENERATE_OBST:
 				if(!blankPeriod) {
 					// draw obstacle here
+					drawSprite(fbuf, &obstacle, OBST_SPAWN_X, OBST_SPAWN_Y);
 					blankPeriod = MIN_OBST_DIST;
 				}
 				break;
@@ -184,16 +204,14 @@ int main(void)
 					stageHeight += STG_HEIGHT_INC;
 					blankPeriod = MIN_OBST_DIST;
 				}
-			case GENERATE_FLAT:
 			default:
 				break;
 			}
 
 			drawStage(fbuf, stageHeight, SCROLL_AMOUNT);
-			drawSprite(fbuf, &player, playerX, PLAYER_Y);
-			/*if(drawSprite(fbuf, &player, playerX, PLAYER_Y)) {
+			if(drawSprite(fbuf, &player, playerX, PLAYER_Y)) {
 				gameState = GAME_DEAD;
-			}*/
+			}
 			break;
 		case GAME_DEAD:
 			if(pressed) {
