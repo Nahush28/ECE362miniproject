@@ -74,6 +74,10 @@ static uint8_t getRand()
 
 uint8_t isFallThrough(fb fbuf, uint8_t oldX, uint8_t newX)
 {
+	for(int i = oldX; i < MIN(newX, LED_V_PX); i++) {
+		if(readPx(fbuf, i, PLAYER_Y))
+			return i;
+	}
 	return 0;
 }
 
@@ -145,7 +149,7 @@ int main(void)
 			clearSprite(fbuf, &player, playerX, PLAYER_Y);
 			// Fall to stage detection
 			if(curStgHeight = isFallThrough(fbuf, playerX, playerX - playerVSpd)) {
-				playerX = curStgHeight;
+				playerX = curStgHeight - player.xSize;
 				playerVSpd = 0;
 				gameState = GAME_RUNNING;
 			} else {
