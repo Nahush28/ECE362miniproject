@@ -27,8 +27,8 @@ enum {
 	GENERATE_VAR3
 };
 
-extern uint8_t pressed;
-extern uint8_t bitmap[16][64];
+uint8_t pressed;
+uint8_t bitmap[16][64];
 
 static uint8_t getRand()
 {
@@ -73,6 +73,15 @@ uint8_t isFallThrough(fb fbuf, uint8_t oldX, uint8_t newX)
 	return 0;
 }
 
+void translateFB(fb fbuf)
+{
+	for(int i = 0; i < 16; i++) {
+		for(int j = 0; j < 64; j++) {
+			bitmap[i][j] = (readPx(fbuf, i, j) << 4) | readPx(fbuf, i + 16, j);
+		}
+	}
+}
+
 int main(void)
 {
 	// init
@@ -89,7 +98,7 @@ int main(void)
 	drawSprite(fbuf, &player, playerX, PLAYER_Y);
 	while(1) {
 		// Refresh led here
-		translate_frame(fbuf);
+		translateFB(fbuf);
 		draw_bitmap();
 		// Game logic
 		switch(gameState) {
