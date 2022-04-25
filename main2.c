@@ -88,7 +88,7 @@ void translateFB(fb fbuf)
 
 extern Sprite player;
 
-uint8_t slowDown = 0
+uint8_t slowDown = 0;
 
 int main(void)
 {
@@ -106,7 +106,7 @@ int main(void)
 
 	clearFb(fbuf);
 	while(1) {
-		if(slowDown != 50) {
+		if(slowDown != 75) {
 			slowDown++;
 			continue;
 		}
@@ -183,9 +183,10 @@ int main(void)
 			}
 
 			drawStage(fbuf, stageHeight, SCROLL_AMOUNT);
-			if(drawSprite(fbuf, &player, playerX, PLAYER_Y)) {
+			drawSprite(fbuf, &player, playerX, PLAYER_Y);
+			/*if(drawSprite(fbuf, &player, playerX, PLAYER_Y)) {
 				gameState = GAME_DEAD;
-			}
+			}*/
 			break;
 		case GAME_DEAD:
 			if(pressed) {
