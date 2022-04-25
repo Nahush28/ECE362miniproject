@@ -27,15 +27,17 @@ enum {
 	GENERATE_VAR3
 };
 
-uint8_t pressed;
-uint8_t bitmap[16][64];
+extern uint8_t pressed;
+extern uint8_t bitmap[16][64];
+
+extern Sprite player, obstacle;
 
 static uint8_t getRand()
 {
 	return 0;
 }
 
-void drawScore()
+/*void drawScore()
 {
 	static check_score = 0;
 	if (check_score == 25) {
@@ -66,7 +68,7 @@ void drawScore()
         	draw_digit(2, 45, dig3, 1);
         if(dig4)
         	draw_digit(2, 38, dig4, 1);
-}
+}*/
 
 uint8_t isFallThrough(fb fbuf, uint8_t oldX, uint8_t newX)
 {
@@ -95,9 +97,9 @@ int main(void)
 	uint8_t stageHeight = NUM_ROWS - 1;
 	uint8_t curStgHeight = 0;
 
+	enable_ports();
+
 	clearFb(fbuf);
-	/*drawStage(fbuf, stageHeight, LED_H_PX);
-	drawSprite(fbuf, &player, playerX, PLAYER_Y);*/
 	while(1) {
 		// Refresh led here
 		translateFB(fbuf);
@@ -113,6 +115,8 @@ int main(void)
 			if(pressed) {
 				pressed = 0;
 				gameState = GAME_RUNNING;
+				drawStage(fbuf, stageHeight, LED_H_PX);
+				drawSprite(fbuf, &player, playerX, PLAYER_Y);
 			}
 			break;
 		case GAME_RUNNING:
@@ -121,9 +125,9 @@ int main(void)
 				playerVSpd = JUMP_V0;
 				gameState = GAME_JUMPING;
 			} else if(!readPx(fbuf, playerX - player.xSize, PLAYER_Y)) {
+				// Fall off
 				gameState = GAME_JUMPING;
 			}
-			// fall off detection here
 		case GAME_JUMPING:
 			pressed = 0;
 			clearSprite(fbuf, &player, playerX, PLAYER_Y);
@@ -173,8 +177,8 @@ int main(void)
 			}
 			break;
 		case GAME_DEAD:
-			if(is_Jumping) {
-				is_Jumping = 0;
+			if(pressed) {
+				pressed = 0;
 				clearFb(fbuf);
 				playerX = LED_V_PX - player.xSize - 1;
 				playerVSpd = 0;
