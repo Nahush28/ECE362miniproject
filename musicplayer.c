@@ -232,7 +232,7 @@ void init_tim2(int n) {
 }
 
 void enable_tim2(){
-    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+    TIM2->CR1 |= TIM_CR1_CEN;
 }
 
 void reset_music(){

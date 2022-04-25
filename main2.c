@@ -14,8 +14,8 @@
 #define MAX_STAGE_HEIGHT 18
 #define OBST_SPAWN_X (stageHeight - obstacle.xSize)
 #define OBST_SPAWN_Y (LED_H_PX - obstacle.ySize - 1)
-#define STG_2_TRESH 200
-#define STG_3_TRESH 500
+#define STG_2_TRESH 250
+#define STG_3_TRESH 750
 #define SCORE ((dig1 + 10 * dig2 + 100 * dig3 + 1000 * dig4))
 
 uint8_t SCROLL_AMOUNT = 1;
@@ -53,18 +53,9 @@ extern uint8_t dig1;
 extern uint8_t dig2;
 extern uint8_t dig3;
 extern uint8_t dig4;
+extern const uint8_t midifile2[];
 
 extern Sprite player, obstacle;
-
-__attribute__((packed))
-struct SysTickR {
-    uint32_t STK_CSR;
-    uint32_t STK_RVR;
-    uint32_t STK_CVR;
-    uint32_t STK_CALIB;
-};
-
-struct SysTickR* sysTick = (struct SysTickR*) 0xe000e010;
 
 static uint8_t getRand()
 {
@@ -83,7 +74,7 @@ void updateScore() {
         SCROLL_AMOUNT = 2;
     } else if(SCORE == STG_3_TRESH) {
         SCROLL_AMOUNT = 3;
-        MIN_OBST_DIST /= 2;
+        MIN_OBST_DIST = 4;
     }
     if (scoreSlowDown == 1) {
         dig1++;
@@ -163,7 +154,10 @@ int main(void)
     init_wavetable_all();
     init_musicplayer_peripherals();
 
-    MIDI_Player *mp = midi_init(midifile);
+    reset_music();
+    MIDI_Player *mp = midi_init(midifile2);
+    init_tim2(10417);
+
 
     clearFb(fbuf);
     while(1) {
@@ -197,7 +191,10 @@ int main(void)
             if(pressed) {
                 pressed = 0;
                 gameState = GAME_RUNNING;
+                reset_music();
+                mp = midi_init(midifile);
                 init_tim2(10417);
+
                 drawStage(fbuf, stageHeight, LED_H_PX);
                 drawSprite(fbuf, &player, playerX, PLAYER_Y);
             }
@@ -263,6 +260,7 @@ int main(void)
         case GAME_DEAD:
 
             reset_music();
+
             if(pressed) {
                 dig1 = 0;
                 dig2 = 0;

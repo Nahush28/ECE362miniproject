@@ -47,9 +47,9 @@ B G R 0
 
 typedef uint8_t fb[FB_SIZE];
 typedef struct __sprite {
-	uint8_t pxMap[FB_SIZE];
-	uint8_t xSize;
-	uint8_t ySize;
+    uint8_t pxMap[FB_SIZE];
+    uint8_t xSize;
+    uint8_t ySize;
 } Sprite;
 
 void clearFb(fb fbuf);
@@ -58,7 +58,7 @@ void writePx(fb fbuf, uint8_t clor, uint32_t x, uint32_t y);
 uint8_t* readRow(fb fbuf, uint32_t row);
 void scrollFrameL(fb fbuf, uint32_t n);
 void drawStage(fb fbuf, uint32_t stageHeight, uint32_t scrollNum);
-uint8_t drawSprite(fb fbuf, Sprite* sprite, uint32_t x, uint32_t y);
+uint8_t drawSprite(fb fbuf, Sprite* sprite, int32_t x, int32_t y);
 void clearSprite(fb fbuf, Sprite* sprite, uint32_t x, uint32_t y);
 
 #endif
