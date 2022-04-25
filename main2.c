@@ -29,6 +29,8 @@ enum {
 
 extern uint8_t pressed;
 extern uint8_t bitmap[16][64];
+extern uint8_t start_screen[1024];
+extern uint8_t end_screen[1024];
 
 extern Sprite player, obstacle;
 
@@ -86,6 +88,8 @@ void translateFB(fb fbuf)
 
 extern Sprite player;
 
+uint8_t slowDown = 0
+
 int main(void)
 {
 	// init
@@ -98,9 +102,16 @@ int main(void)
 	uint8_t curStgHeight = 0;
 
 	enable_ports();
+	enable_exti();
 
 	clearFb(fbuf);
 	while(1) {
+		if(slowDown != 50) {
+			slowDown++;
+			continue;
+		}
+		else
+			slowDown = 0;
 		// Refresh led here
 		translateFB(fbuf);
 		if(gameState == GAME_INIT) {
@@ -126,6 +137,7 @@ int main(void)
 				gameState = GAME_JUMPING;
 			} else if(!readPx(fbuf, playerX - player.xSize, PLAYER_Y)) {
 				// Fall off
+				playerVSpd = -1;
 				gameState = GAME_JUMPING;
 			}
 		case GAME_JUMPING:
@@ -173,7 +185,6 @@ int main(void)
 			drawStage(fbuf, stageHeight, SCROLL_AMOUNT);
 			if(drawSprite(fbuf, &player, playerX, PLAYER_Y)) {
 				gameState = GAME_DEAD;
-				// Draw dead screen here
 			}
 			break;
 		case GAME_DEAD:
