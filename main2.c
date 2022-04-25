@@ -82,6 +82,8 @@ void translateFB(fb fbuf)
 	}
 }
 
+extern Sprite player;
+
 int main(void)
 {
 	// init
@@ -94,11 +96,16 @@ int main(void)
 	uint8_t curStgHeight = 0;
 
 	clearFb(fbuf);
-	drawStage(fbuf, stageHeight, LED_H_PX);
-	drawSprite(fbuf, &player, playerX, PLAYER_Y);
+	/*drawStage(fbuf, stageHeight, LED_H_PX);
+	drawSprite(fbuf, &player, playerX, PLAYER_Y);*/
 	while(1) {
 		// Refresh led here
 		translateFB(fbuf);
+		if(gameState == GAME_INIT) {
+			memcpy(bitmap, start_screen, 16 * 64);
+		} else if(gameState == GAME_DEAD) {
+			memcpy(bitmap, end_screen, 16 * 64);
+		}
 		draw_bitmap();
 		// Game logic
 		switch(gameState) {

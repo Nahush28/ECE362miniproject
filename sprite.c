@@ -16,6 +16,6 @@ const Sprite obstacle = (Sprite) {
 		  SPRITEPX(Y, Y),
 		  SPRITEPX(Y, Y),
 		  SPRITEPX(Y, Y)},
-	.xSize = 2;
-	.ySize = 4;
+	.xSize = 2,
+	.ySize = 4
 };
