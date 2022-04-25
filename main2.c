@@ -4,7 +4,7 @@
 #define SCROLL_AMOUNT 2
 #define PLAYER_Y 0
 #define JUMP_V0 6
-#define GRAVITY 2
+#define GRAVITY 1
 #define MIN_OBST_DIST 6
 #define STG_HEIGHT_INC 6
 #define MAX_STAGE_HEIGHT 6
@@ -74,9 +74,11 @@ static uint8_t getRand()
 
 uint8_t isFallThrough(fb fbuf, uint8_t oldX, uint8_t newX)
 {
-	for(int i = oldX; i < MIN(newX, LED_V_PX); i++) {
+	for(int i = oldX + player.xSize; i < MIN(newX + player.xSize, LED_V_PX); i++) {
 		if(readPx(fbuf, i, PLAYER_Y))
 			return i;
+		else if(i == LED_V_PX)
+			return LED_V_PX - 1;
 	}
 	return 0;
 }
@@ -98,7 +100,7 @@ int main(void)
 {
 	// init
 	fb fbuf;
-	uint8_t gameState = GAME_INIT;
+	uint8_t gameState = GAME_RUNNING;
 	int8_t playerX = LED_V_PX - player.xSize - 1;
 	int8_t playerVSpd = 0;
 	uint8_t blankPeriod = 0;
@@ -154,7 +156,8 @@ int main(void)
 				gameState = GAME_RUNNING;
 			} else {
 				playerX -= playerVSpd;
-				playerVSpd = playerVSpd != 0 ? playerVSpd - GRAVITY : 0;
+				if(gameState == GAME_JUMPING)
+					playerVSpd -= GRAVITY;
 			}
 			scrollFrameL(fbuf, SCROLL_AMOUNT);
 
