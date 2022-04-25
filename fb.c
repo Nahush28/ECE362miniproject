@@ -2,8 +2,6 @@
 #include <string.h>
 #include "fb.h"
 
-const uint8_t baseStageHeight = LED_V_PX - 1;
-
 void clearFb(fb fbuf)
 {
 	memset(fbuf, 0, FB_SIZE);
@@ -64,15 +62,20 @@ void scrollFrameL(fb fbuf, uint32_t n)
 
 void drawStage(fb fbuf, uint32_t stageHeight, uint32_t scrollNum)
 {
-	for(int i = LED_H_PX - scrollNum; i < LED_H_PX; i++) {
-		writePx(fbuf, W, baseStageHeight, i);
-		writePx(fbuf, W, stageHeight, i);
+	static uint8_t oldStgHeight = -1;
+	if(oldStgHeight == -1)
+		oldStgHeight = stageHeight;
+	for(int i = LED_H_PX - scrollNum; i < LED_H_PX; i++)
+		writePx(fbuf, R, stageHeight, i);
+	if(oldStgHeight != stageHeight) {
+		for(int i = MIN(stageHeight, oldStgHeight), i <= MAX(stageHeight, oldStgHeight), i++)
+			writePx(fbuf, R, i, LED_H_PX - scrollNum - 1);
 	}
 }
 
 static uint8_t readSprite(Sprite* sprite, uint32_t x, uint32_t y)
 {
-	uint32_t idx = (x * sprite->xSize + y) * CLOR_BIT;
+	uint32_t idx = (x * sprite->ySize + y) * CLOR_BIT;
 	uint32_t offset = idx % BIT_SIZE;
 	idx /= BIT_SIZE;
 	return ((sprite->pxMap)[idx] >> offset) & CLOR_MASK;
