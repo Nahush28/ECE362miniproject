@@ -14,8 +14,8 @@
 #define MAX_STAGE_HEIGHT 18
 #define OBST_SPAWN_X (stageHeight - obstacle.xSize)
 #define OBST_SPAWN_Y (LED_H_PX - obstacle.ySize - 1)
-#define STG_2_TRESH 250
-#define STG_3_TRESH 750
+#define STG_2_TRESH 350
+#define STG_3_TRESH 850
 #define SCORE ((dig1 + 10 * dig2 + 100 * dig3 + 1000 * dig4))
 
 uint8_t SCROLL_AMOUNT = 1;
