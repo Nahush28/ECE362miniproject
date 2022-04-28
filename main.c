@@ -74,7 +74,7 @@ void updateScore() {
         SCROLL_AMOUNT = 2;
     } else if(SCORE == STG_3_TRESH) {
         SCROLL_AMOUNT = 3;
-        MIN_OBST_DIST = 4;
+        MIN_OBST_DIST += 16;
     }
     if (scoreSlowDown == 1) {
         dig1++;
@@ -143,7 +143,7 @@ int main(void)
     uint8_t gameState = GAME_INIT;
     int8_t playerX = LED_V_PX - player.xSize - 1;
     int8_t playerVSpd = 0;
-    uint8_t blankPeriod = 0;
+    int8_t blankPeriod = 0;
     uint8_t stageHeight = NUM_ROWS - 1;
     uint8_t curStgHeight = 0;
 
@@ -226,7 +226,7 @@ int main(void)
             }
             scrollFrameL(fbuf, SCROLL_AMOUNT);
 
-            blankPeriod = blankPeriod == 0 ? 0 : blankPeriod - SCROLL_AMOUNT;
+            blankPeriod = blankPeriod <= 0 ? 0 : blankPeriod - SCROLL_AMOUNT;
             // Generation
             switch(getRand()) {
             case GENERATE_OBST:
