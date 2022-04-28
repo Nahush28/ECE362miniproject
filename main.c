@@ -64,6 +64,11 @@ static uint8_t getRand()
         return GENERATE_FLAT;
     }
     srand(TIM6->CNT);
+    if(SCORE < STG_3_TRESH)
+	    MIN_OBST_DIST = 24 + rand() % 16;
+    else
+	    MIN_OBST_DIST = 34 + rand() % 16;
+    srand(TIM6->CNT);
     return rand() % 4;
 }
 
@@ -74,7 +79,7 @@ void updateScore() {
         SCROLL_AMOUNT = 2;
     } else if(SCORE == STG_3_TRESH) {
         SCROLL_AMOUNT = 3;
-        MIN_OBST_DIST += 16;
+        MIN_OBST_DIST += 28;
     }
     if (scoreSlowDown == 1) {
         dig1++;
@@ -160,6 +165,7 @@ int main(void)
 
 
     clearFb(fbuf);
+
     while(1) {
         check_music(mp);
 
